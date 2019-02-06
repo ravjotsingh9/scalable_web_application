@@ -1,0 +1,68 @@
+version: "3.6"
+
+services:
+  # frontend:
+  #   build: "./frontend-react/"
+  #   restart: "always"
+  #   command: "npm start"
+  #   links:
+  #     - nginx
+  #   environment:
+  #     - NODE_ENV=development
+  #     - REACT_APP_API_SERVER=nginx
+  #   depends_on:
+  #     - "mysql"
+  #     - "backend"
+  #     - "nginx"
+  #   ports:
+  #     - "3000:3000"
+  webservice:
+    build: "./webservice"
+    command: "server"
+    links:
+      - mysql
+    environment:
+      DB: "mysql"
+      DB_ADDRESS: "mysql:3306"
+      REDIS_ADDRESS: "redis:6379"
+    depends_on:
+      - "mysql"
+      - "redis"
+    ports:
+      - "8080:8080"
+  mysql:
+    build: "./mysql"
+    restart: "always"
+    command: --init-file /docker-entrypoint-initdb.d/CreateTable.sql  --local_infile=1
+    volumes:
+      - ./mysql/sql-scripts:/docker-entrypoint-initdb.d/
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=payroll_report
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+  nginx:
+    build: "./nginx"
+    restart: "always"
+    ports:
+      - "80:80"
+    expose:
+      - "80"
+    depends_on:
+      - "webservice"
+      - "mysql"
+  redis:
+    image: redis
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: "always"
+    ports:
+      - "6379:6379"
+    hostname: redis
+    volumes:
+      - redis-data:/data
+volumes:
+  redis-data:
