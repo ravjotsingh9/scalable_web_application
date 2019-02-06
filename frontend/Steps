@@ -1,0 +1,5 @@
+1. `npx create-react-app my-app`
+2. `cd my-app` and `npm start`
+3. Using React-Bootstrap: `npm install react-bootstrap bootstrap`
+4. Used Filepond:https://itnext.io/uploading-files-with-react-and-filepond-f8a798308557
+5. Enable cors or use niginx
