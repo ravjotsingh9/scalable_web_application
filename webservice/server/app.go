@@ -4,7 +4,6 @@ package main
 
 import (
 	"bufio"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,8 +16,10 @@ import (
 	"time"
 
 	cache_redis "github.com/ravjotsingh9/payroll-application/webservice/server/redis"
+	util "github.com/ravjotsingh9/payroll-application/webservice/server/util"
 
-	mysql "github.com/go-sql-driver/mysql"
+	db "github.com/ravjotsingh9/payroll-application/webservice/server/mysql"
+
 	"github.com/gorilla/mux"
 	_ "github.com/jinzhu/now"
 	"github.com/kelseyhightower/envconfig"
@@ -30,8 +31,9 @@ type Config struct {
 }
 
 type App struct {
-	Router      *mux.Router
-	DB          *sql.DB
+	Router *mux.Router
+	//DB          *sql.DB
+	DB          db.Mysqldb
 	Set         map[string]bool
 	RedisClient cache_redis.RedisClient
 }
@@ -57,11 +59,14 @@ func (a *App) Initialize(user, password, dbname string) {
 	}
 
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s)/%s", user, password, cfg.DBAddress, dbname)
+	/*
+		a.DB, err = sql.Open("mysql", connectionString)
+		if err != nil {
+			log.Fatal("Couldn't connect to DB")
+		}
+	*/
 
-	a.DB, err = sql.Open("mysql", connectionString)
-	if err != nil {
-		log.Fatal("Couldn't connect to DB")
-	}
+	a.DB.DBConnection(connectionString)
 
 	a.Router = mux.NewRouter()
 	a.initializeRoutes()
@@ -87,27 +92,34 @@ func (a *App) getReport(w http.ResponseWriter, r *http.Request) {
 
 	if strings.Compare(val, "true") == 0 {
 		content, _ := a.RedisClient.GetFromCache("content")
-		respondWithJSONFromBytes(w, http.StatusCreated, []byte(content))
+		util.RespondWithJSONFromBytes(w, http.StatusCreated, []byte(content))
 		return
 	} else {
-		statement := fmt.Sprintf("(select employee_id, payday,  sum(record.pay) as salary from (select date, hours_worked, employee_id, job_group, payday, hours_worked*(select sal from job_group as salTable where salTable.job_group = rec.job_group) as pay from  record as rec) as record  group by employee_id, payday) ")
-		rows, err := a.DB.Query(statement)
-		if err != nil {
-			respondWithError(w, http.StatusInternalServerError, "Failed to query DB")
-			return
-		}
-
-		defer rows.Close()
-
-		records := []Record{}
-
-		for rows.Next() {
-			var record Record
-			if err := rows.Scan(&record.EmployeeID, &record.PayDay, &record.Salary); err != nil {
-				respondWithError(w, http.StatusInternalServerError, "No rows returned from DB")
+		/*
+			statement := fmt.Sprintf("(select employee_id, payday,  sum(record.pay) as salary from (select date, hours_worked, employee_id, job_group, payday, hours_worked*(select sal from job_group as salTable where salTable.job_group = rec.job_group) as pay from  record as rec) as record  group by employee_id, payday) ")
+			rows, err := a.DB.Query(statement)
+			if err != nil {
+				util.RespondWithError(w, http.StatusInternalServerError, "Failed to query DB")
 				return
 			}
-			records = append(records, record)
+
+			defer rows.Close()
+
+			records := []Record{}
+
+			for rows.Next() {
+				var record Record
+				if err := rows.Scan(&record.EmployeeID, &record.PayDay, &record.Salary); err != nil {
+					util.RespondWithError(w, http.StatusInternalServerError, "No rows returned from DB")
+					return
+				}
+				records = append(records, record)
+			}
+		*/
+		records, err := a.DB.GetReport()
+		if err != nil {
+			util.RespondWithError(w, http.StatusInternalServerError, "Failed to query DB")
+			return
 		}
 
 		recordsJSONBytes, _ := json.Marshal(records)
@@ -117,7 +129,7 @@ func (a *App) getReport(w http.ResponseWriter, r *http.Request) {
 
 		a.RedisClient.SetToCache("valid", "true")
 
-		respondWithJSON(w, http.StatusCreated, records)
+		util.RespondWithJSON(w, http.StatusCreated, records)
 		return
 	}
 
@@ -152,18 +164,19 @@ func (a *App) uploadReport(w http.ResponseWriter, r *http.Request) {
 		var res response
 		res.Status = http.StatusBadRequest
 		res.Message = err.Error()
-		respondWithJSON(w, http.StatusBadRequest, res)
+		util.RespondWithJSON(w, http.StatusBadRequest, res)
 		return
 
 	} else {
 		var res response
 		res.Status = http.StatusCreated
 		res.Message = "Successfully uploaded"
-		respondWithJSON(w, http.StatusCreated, res)
+		util.RespondWithJSON(w, http.StatusCreated, res)
 		return
 	}
 }
 
+/*
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	respondWithJSON(w, code, map[string]string{"error": message})
 }
@@ -184,7 +197,7 @@ func respondWithJSONFromBytes(w http.ResponseWriter, code int, dataInbytes []byt
 	w.WriteHeader(code)
 	w.Write(dataInbytes)
 }
-
+*/
 const (
 	ReportStr = "REPORT ID"
 	Date      = "DATE"
@@ -276,31 +289,52 @@ func uploadToDB(filePath string, a *App) (bool, error) {
 	}
 
 	// check if is in db
-	reportID, err := strconv.Atoi(ReportID)
-	if err != nil {
-		log.Println(err)
-	}
-	statement := fmt.Sprintf("SELECT report_id FROM record WHERE report_id=%d", reportID)
-	rows, err := a.DB.Query(statement)
+	/*
+		reportID, err := strconv.Atoi(ReportID)
+		if err != nil {
+			log.Println(err)
+		}
+		statement := fmt.Sprintf("SELECT report_id FROM record WHERE report_id=%d", reportID)
+		rows, err := a.DB.Query(statement)
+		if err != nil {
+			log.Println(err)
+			return false, err
+		}
+
+		for rows.Next() {
+			err := errors.New("Already processed report, numbered " + ReportID)
+			log.Println(err)
+			return false, err
+		}
+	*/
+
+	ret, err := a.DB.IfReportIDExists(ReportID)
 	if err != nil {
 		log.Println(err)
 		return false, err
 	}
-
-	for rows.Next() {
+	if ret {
 		err := errors.New("Already processed report, numbered " + ReportID)
 		log.Println(err)
 		return false, err
 	}
 
-	//register the file
-	mysql.RegisterLocalFile(tmpFile)
+	/*
+		//register the file
+		mysql.RegisterLocalFile(tmpFile)
 
-	//load the file into database
-	//execCmd := "LOAD DATA LOCAL INFILE '" + tmpFile + "' INTO TABLE RECORD fields terminated BY ',' lines terminated BY '\n' IGNORE 1 LINES (@vdate, hours_worked, employee_id, job_group, @vpayday, report_id)  SET date = STR_TO_DATE(@vdate,'%d/%m/%Y'), report_id =" + ReportID + ", payday = STR_TO_DATE(@vpayday,'%Y-%m-%d') ;"
-	execCmd := "LOAD DATA LOCAL INFILE '" + tmpFile + "' INTO TABLE record fields terminated BY ',' lines terminated BY '\n' IGNORE 1 LINES (@vdate, hours_worked, employee_id, job_group, @vpayday, report_id)  SET date = STR_TO_DATE(@vdate,'%d/%m/%Y'), report_id =" + ReportID + ", payday = STR_TO_DATE(@vpayday,'%Y-%m-%d') ;"
+		//load the file into database
+		//execCmd := "LOAD DATA LOCAL INFILE '" + tmpFile + "' INTO TABLE RECORD fields terminated BY ',' lines terminated BY '\n' IGNORE 1 LINES (@vdate, hours_worked, employee_id, job_group, @vpayday, report_id)  SET date = STR_TO_DATE(@vdate,'%d/%m/%Y'), report_id =" + ReportID + ", payday = STR_TO_DATE(@vpayday,'%Y-%m-%d') ;"
+		execCmd := "LOAD DATA LOCAL INFILE '" + tmpFile + "' INTO TABLE record fields terminated BY ',' lines terminated BY '\n' IGNORE 1 LINES (@vdate, hours_worked, employee_id, job_group, @vpayday, report_id)  SET date = STR_TO_DATE(@vdate,'%d/%m/%Y'), report_id =" + ReportID + ", payday = STR_TO_DATE(@vpayday,'%Y-%m-%d') ;"
 
-	_, err = a.DB.Exec(execCmd)
+		_, err = a.DB.Exec(execCmd)
+		if err != nil {
+			log.Println(err)
+			return false, err
+		}
+	*/
+
+	ret, err = a.DB.UploadCsv(tmpFile, ReportID)
 	if err != nil {
 		log.Println(err)
 		return false, err

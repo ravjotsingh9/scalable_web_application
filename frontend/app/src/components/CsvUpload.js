@@ -16,12 +16,17 @@ class CsvUpload extends Component {
   render() {
     let _this = this;
     _this.api_upload_address = "http://localhost:80/uploadReport";
+
     return (
       <div>
         <Container>
           <Row>
             <Col>
-              <FilePond server={_this.api_upload_address} />
+              <FilePond
+                ref={ref => (this.pond = ref)}
+                server={_this.api_upload_address}
+                onprocessfile={() => this.props.getHandler()}
+              />
             </Col>
           </Row>
         </Container>

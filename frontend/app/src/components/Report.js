@@ -36,7 +36,10 @@ class Report extends Component {
             <Row>
               <Col />
               <Col xs={10}>
-                <CsvUpload getHandler={this.getContent} />
+                <CsvUpload
+                  getHandler={this.getContent}
+                  contents={this.state.contents}
+                />
               </Col>
               <Col />
             </Row>

@@ -25,3 +25,6 @@ frontend/app/.env.production.local
 frontend/app/npm-debug.log*
 frontend/app/yarn-debug.log*
 frontend/app/yarn-error.log*
+
+
+webservice/runServer
