@@ -62,7 +62,3 @@ services:
     ports:
       - "6379:6379"
     hostname: redis
-    volumes:
-      - redis-data:/data
-volumes:
-  redis-data:

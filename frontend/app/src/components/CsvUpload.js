@@ -11,6 +11,12 @@ class CsvUpload extends Component {
     super(props);
     this.state = {};
     this.render = this.render.bind(this);
+    this.displayError = this.displayError.bind(this);
+  }
+
+  displayError(error) {
+    console.log("Display Error------------");
+    console.log(error);
   }
 
   render() {
@@ -26,6 +32,7 @@ class CsvUpload extends Component {
                 ref={ref => (this.pond = ref)}
                 server={_this.api_upload_address}
                 onprocessfile={() => this.props.getHandler()}
+                onerror={error => this.displayError(error)}
               />
             </Col>
           </Row>
