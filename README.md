@@ -14,3 +14,15 @@
 3. CD to payroll-application dir and run `docker-compose up --build`. This should start 4 docker processes.
 4. On another terminal, CD payroll-application/frontend and run `npm install`
 5. After npm install is done, start the frontend by running `npm start`. This should start frontend on http://localhost:3000
+
+## Highlights
+
+1. Scalable infrastructure. Using following command this system can be scaled
+   `docker-compose up --build --scale webservice=2`
+2. Optimized /GET Report to render almost by 46% (15 ms to 8 ms) by using cache infront of database.
+
+## Furture work
+
+1. Store processed report ids in global cache to response quickly for redundant report.
+2. Display specific message when upload fails.
+3. Ordering the generated report.
