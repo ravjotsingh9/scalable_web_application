@@ -26,3 +26,4 @@
 1. Store processed report ids in global cache to response quickly for redundant report. [TASK]
 2. Display specific message when upload fails. [BUG]
 3. Ordering the generated report. [BUG]
+4. Add Unit tests. [TASK]
