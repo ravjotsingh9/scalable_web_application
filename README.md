@@ -19,10 +19,10 @@
 
 1. Scalable infrastructure. Using following command this system can be scaled
    `docker-compose up --build --scale webservice=2`
-2. Optimized /GET Report to render almost by 46% (15 ms to 8 ms) by using cache infront of database.
+2. Optimized /GET Report to render almost by 46% (15 ms to 8 ms pr request) faster by using cache infront of database.
 
 ## Furture work
 
-1. Store processed report ids in global cache to response quickly for redundant report.
-2. Display specific message when upload fails.
-3. Ordering the generated report.
+1. Store processed report ids in global cache to response quickly for redundant report. [TASK]
+2. Display specific message when upload fails. [BUG]
+3. Ordering the generated report. [BUG]
