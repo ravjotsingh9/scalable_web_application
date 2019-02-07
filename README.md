@@ -21,6 +21,10 @@
    `docker-compose up --build --scale webservice=2`
 2. Optimized /GET Report to render almost by 46% (15 ms to 8 ms pr request) faster by using cache infront of database.
 
+## System Design
+
+![Scheme](image/sysdesign.png)
+
 ## Furture work
 
 1. Store processed report ids in global cache to response quickly for redundant report. [TASK]
