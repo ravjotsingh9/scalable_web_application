@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: redis
+  name: redis
+  selfLink: /api/v1/namespaces/default/services/redis
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    io.kompose.service: redis
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}

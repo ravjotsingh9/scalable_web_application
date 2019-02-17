@@ -28,7 +28,7 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=payroll_report
-      - MYSQL_USER=root
+      #    - MYSQL_USER=root
       - MYSQL_PASSWORD=root
   nginx:
     build: "./nginx"
