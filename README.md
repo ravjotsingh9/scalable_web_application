@@ -31,3 +31,4 @@
 2. Display specific message when upload fails. [BUG]
 3. Ordering the generated report. [BUG]
 4. Add Unit tests. [TASK]
+5. Helm Chart: Use values.yaml for values [TASK]
