@@ -1,4 +1,4 @@
-# Payroll Web Application
+# Scalable Payroll Web Application
 
 ## Pre-req
 
